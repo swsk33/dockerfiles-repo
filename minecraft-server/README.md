@@ -19,7 +19,7 @@ docker volume create minecraft-data
 通过下列命令：
 
 ```bash
-docker run -itd --name=minecraft-server -p 25565:25565 -v minecraft-data:/minecraft-server swsk33/minecraft-server
+docker run -itd --name=minecraft-server -p 25565:25565 -v minecraft-data:/minecraft swsk33/minecraft-server
 ```
 
 第一次需要等待世界创建，过几分钟服务端即启动，可以通过游戏连接。
