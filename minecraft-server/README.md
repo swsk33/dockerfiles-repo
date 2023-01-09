@@ -2,6 +2,10 @@
 
 可以快速地启动一个Minecraft原版服务端。
 
+- [官方文档](https://minecraft.fandom.com/wiki/Tutorials/Setting_up_a_server)
+- Dockerfile文件
+	- [1.19.2](https://github.com/swsk33/dockerfiles-repo/blob/master/minecraft-server/1.19.2/Dockerfile)
+
 # 说明
 
 ## 1，创建数据卷

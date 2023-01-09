@@ -3,7 +3,7 @@
 一个Alibaba Sentinel Dashboard镜像，用于快速在服务器上部署一个流量防卫兵面板实例。
 
 - [官方文档](https://sentinelguard.io/zh-cn/docs/introduction.html)
-- Dockerfile文件
+- [Dockerfile文件](https://github.com/swsk33/dockerfiles-repo/blob/master/sentinel-dashboard/latest/Dockerfile)
 
 # 说明
 

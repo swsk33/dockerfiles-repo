@@ -2,6 +2,9 @@
 
 可以快速地启动一个泰拉瑞亚服务端。
 
+- [官方文档](https://terraria.wiki.gg/wiki/Server)
+- [Dockerfile文件](https://github.com/swsk33/dockerfiles-repo/blob/master/terraria-server/latest/Dockerfile)
+
 # 说明
 
 ## 1，创建数据卷
