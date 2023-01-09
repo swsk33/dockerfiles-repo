@@ -1,0 +1,14 @@
+# 房间选项
+world=/terraria/world/main.wld
+worldpath=/terraria/world/
+maxplayers=8
+port=7777
+# password=123456
+motd=Welcome!
+language=zh-Hans
+upnp=1
+
+# 自动创建选项
+autocreate=2
+worldname=World
+difficulty=2
