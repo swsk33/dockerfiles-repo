@@ -5,5 +5,6 @@ RUN chmod +x /nacos/start.sh
 ENV LANG C.UTF-8
 VOLUME ["/nacos/conf"]
 EXPOSE 8848
+EXPOSE 9848
 WORKDIR /nacos
 CMD ["bash", "./start.sh"]

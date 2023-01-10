@@ -18,7 +18,7 @@ docker volume create nacos-config
 ## 2，创建并启动容器
 
 ```bash
-docker run -id --name=nacos -p 8848:8848 -v nacos-config:/nacos/conf swsk33/nacos-standalone
+docker run -id --name=nacos -p 8848:8848 -p 9848:9848 -v nacos-config:/nacos/conf swsk33/nacos-standalone
 ```
 
 ## 3，修改配置文件
