@@ -1,6 +1,0 @@
-若文件夹中有download.sh文件，请先运行以下载内容，再将下载内容和Dockerfile等等其它文件一起上传至Linux服务器制作镜像。
-
-若使用bash可以设定代理然后下载：
-
-export http_proxy="http://地址:端口"
-export https_proxy="http://地址:端口"

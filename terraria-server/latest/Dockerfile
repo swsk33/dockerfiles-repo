@@ -12,7 +12,8 @@ RUN apt update \
 	&& rm -rf terraria.zip 1449/ \
 	&& apt purge -y unzip \
 	&& apt autoremove -y \
-	&& apt clean
+	&& apt clean \
+	&& rm -rf /var/lib/apt/lists/*
 ADD config.txt /terraria/config/
 ENV LANG C.UTF-8
 EXPOSE 7777
