@@ -1,6 +1,5 @@
 FROM debian:bullseye-slim
 COPY terraria.zip /
-ADD sources.list /etc/apt/sources.list
 RUN apt update \
 	&& apt install -y unzip \
 	&& unzip -d / /terraria.zip \

@@ -1,6 +1,0 @@
-# 腾讯镜像源
-deb http://mirrors.cloud.tencent.com/debian bullseye main contrib
-deb http://mirrors.cloud.tencent.com/debian bullseye-updates main contrib
-
-# 腾讯安全更新镜像源
-deb http://mirrors.cloud.tencent.com/debian-security bullseye-security main contrib
