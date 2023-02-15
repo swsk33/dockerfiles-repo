@@ -1,18 +1,17 @@
 FROM debian:bullseye-slim
-COPY terraria.zip /
 RUN apt update \
-	&& apt install -y unzip \
+	&& apt install -y --no-install-recommends unzip wget ca-certificates \
+	&& wget -O terraria.zip https://www.terraria.org/api/download/pc-dedicated-server/terraria-server-1449.zip \
 	&& unzip -d / /terraria.zip \
 	&& mkdir /terraria \
 	&& mkdir /terraria/world \
 	&& mkdir /terraria/config \
 	&& cp -rf /1449/Linux/* /terraria/ \
 	&& chmod +x /terraria/TerrariaServer.bin.x86_64 \
-	&& rm -rf terraria.zip 1449/ \
-	&& apt purge -y unzip \
+	&& apt purge -y unzip wget ca-certificates \
 	&& apt autoremove -y \
 	&& apt clean \
-	&& rm -rf /var/lib/apt/lists/*
+	&& rm -rf terraria.zip 1449/ /var/lib/apt/lists/*
 ADD config.txt /terraria/config/
 ENV LANG C.UTF-8
 EXPOSE 7777

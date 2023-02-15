@@ -1,5 +1,6 @@
-FROM azul/zulu-openjdk-alpine:17-jre
-ADD sentinel-dashboard.jar /sentinel/
+FROM azul/zulu-openjdk-alpine:17-jre-headless-latest
+RUN mkdir /sentinel \
+	&& wget -O /sentinel/sentinel-dashboard.jar https://github.com/alibaba/Sentinel/releases/download/1.8.6/sentinel-dashboard-1.8.6.jar
 EXPOSE 8849
 EXPOSE 8719
 WORKDIR /sentinel/
