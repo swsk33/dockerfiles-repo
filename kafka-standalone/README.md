@@ -1,27 +1,37 @@
 # Kafka单机镜像
 
-这是一个Kafka的单机镜像，可用于快速地部署一个单机Kafka实例。
+这是一个Kafka的单机镜像，可用于快速地部署一个单机Kafka实例，`Tag`的命名规则为：`Scala版本-Kafka版本`。
 
 - Kafka官方文档：[传送门](https://kafka.apache.org/documentation/)
 - Dockerfile文件：[传送门](https://github.com/swsk33/dockerfiles-repo/blob/master/kafka-standalone/latest/Dockerfile)
 
 # 说明
 
-## 1，创建数据卷
+## 1，创建`Zookeeper`容器
 
-拉取容器后，创建容器之前先创建个具名数据卷用于持久化Kafka的**配置文件**，也以便于我们后续可以修改：
+由于`Kafka`依赖于`Zookeeper`，所以首先要拉取并创建`Zookeeper`容器：
 
 ```bash
-docker volume create kafka-config
+docker pull zookeeper
+docker run -id --name=zookeeper -v zookeeper-data:/data -v zookeeper-datalog:/datalog -v zookeeper-log:/logs zookeeper
 ```
 
-## 2，创建并运行容器
+## 2，创建并运行`Kafka`容器
 
 使用以下命令创建容器：
 
 ```bash
-docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config swsk33/kafka-standalone
+docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -e ZOOKEEPER_HOST=zookeeper --link=zookeeper swsk33/kafka-standalone
 ```
+
+可见创建`kafka`容器时，链接到了开始创建的`zookeeper`容器并指定了环境变量参数。如果你的`Zookeeper`容器名为自定义的，那么`--link`参数和`ZOOKEEPER_HOST`变量也需要注意相应地做出改变。
+
+可用的环境变量参数如下：
+
+- `ZOOKEEPER_HOST` 指定`Kafka`要使用的`Zookeeper`的地址，默认是`127.0.0.1`
+- `ZOOKEEPER_PORT` 指定`Kafka`要使用的`Zookeeper`的端口，默认是`2181`
+
+若你的`Zookeeper`部署在别处或者是端口不为默认，可通过这两个环境变量参数指定。
 
 ## 3，修改配置文件
 
@@ -35,16 +45,10 @@ docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config swsk33/ka
 
 ### (1) 日志查看
 
-查看Kafka实时日志：
+查看`Kafka`实时日志：
 
 ```bash
 docker logs -f kafka
-```
-
-查看内置Zookeeper实时日志：
-
-```bash
-docker exec -it kafka tail -f zookeeper.log
 ```
 
 ### (2) 管理`Topic`（主题）
