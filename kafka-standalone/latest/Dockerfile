@@ -11,4 +11,4 @@ ENV ZOOKEEPER_PORT=2181
 ENV KAFKA_HOST=127.0.0.1
 VOLUME ["/kafka/config"]
 WORKDIR /kafka
-CMD bin/kafka-server-start.sh config/server.properties --override zookeeper.connect=$ZOOKEEPER_HOST:$ZOOKEEPER_PORT --override advertised.listeners=$KAFKA_HOST
+CMD bin/kafka-server-start.sh config/server.properties --override zookeeper.connect=$ZOOKEEPER_HOST:$ZOOKEEPER_PORT --override advertised.listeners=PLAINTEXT://$KAFKA_HOST:9092
