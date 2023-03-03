@@ -21,15 +21,18 @@ docker run -id --name=zookeeper -v zookeeper-data:/data -v zookeeper-datalog:/da
 使用以下命令创建容器：
 
 ```bash
-docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -e ZOOKEEPER_HOST=zookeeper --link=zookeeper swsk33/kafka-standalone
+docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -e ZOOKEEPER_HOST=zookeeper --link=zookeeper -e KAFKA_HOST=kafka服务器的外网地址 swsk33/kafka-standalone
 ```
 
 可见创建`kafka`容器时，链接到了开始创建的`zookeeper`容器并指定了环境变量参数。如果你的`Zookeeper`容器名为自定义的，那么`--link`参数和`ZOOKEEPER_HOST`变量也需要注意相应地做出改变。
 
-可用的环境变量参数如下：
+上述`KAFKA_HOST`必须要配置为`Kafka`所在服务器的**外网地址**，否则会导致Java中生产者集成`Kafka`时无法连接。
+
+所有的环境变量参数如下：
 
 - `ZOOKEEPER_HOST` 指定`Kafka`要使用的`Zookeeper`的地址，默认是`127.0.0.1`
 - `ZOOKEEPER_PORT` 指定`Kafka`要使用的`Zookeeper`的端口，默认是`2181`
+- `KAFKA_HOST` 指定`Kafka`所在服务器的外网地址，必须要配置
 
 若你的`Zookeeper`部署在别处或者是端口不为默认，可通过这两个环境变量参数指定。
 
