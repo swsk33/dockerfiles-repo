@@ -58,7 +58,7 @@ docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config \
 -e KAFKA_HOST=部署Kafka的服务器的外网地址 \
 -e BROKER_ID=brokerId \
 -e NUM_PARTITIONS=Topic分区数 \
---link=zookeeper swsk33/kafka-standalone
+swsk33/kafka-standalone
 ```
 
 除了之前的一些必要配置之外，这里还需要注意：
