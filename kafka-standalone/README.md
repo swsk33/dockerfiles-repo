@@ -7,25 +7,30 @@
 
 # 说明
 
-## 1，创建`Zookeeper`容器
+该镜像支持Zookeeper模式和KRaft模式的单机/集群搭建，下面将分别进行介绍，大家选择其一即可。
 
-由于`Kafka`依赖于`Zookeeper`，所以首先要拉取并创建`Zookeeper`容器：
+## 1，Zookeeper模式
+
+### (1) 创建`Zookeeper`容器
+
+在Zookeeper模式下，`Kafka`依赖于`Zookeeper`，所以首先要拉取并创建`Zookeeper`容器：
 
 ```bash
 docker pull zookeeper
 docker run -id --name=zookeeper -v zookeeper-data:/data -v zookeeper-datalog:/datalog -v zookeeper-log:/logs zookeeper
 ```
 
-## 2，创建并运行`Kafka`容器
+### (2) 创建并运行`Kafka`容器
 
-### (1) 单机部署
+#### 1. 单机部署
 
 使用以下命令创建容器：
 
 ```bash
-docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config \
+docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
 -e ZOOKEEPER_URL=zookeeper:2181 \
 -e KAFKA_HOST=部署Kafka的服务器的外网地址 \
+-e KAFKA_PORT=外部访问Kafka容器的端口 \
 --link=zookeeper swsk33/kafka-standalone
 ```
 
@@ -36,7 +41,8 @@ docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config \
 上述环境变量参数如下：
 
 - `ZOOKEEPER_URL` 指定`Kafka`要使用的`Zookeeper`的地址和端口，默认是`127.0.0.1:2181`
-- `KAFKA_HOST` 指定`Kafka`所在服务器的外网地址，必须要配置
+- `KAFKA_HOST` 指定`Kafka`所在服务器的外网地址，必须要配置，默认是`127.0.0.1`
+- `KAFKA_PORT` 指定外部（通过宿主机）访问这个`Kafka`容器的端口，必须要配置，**该配置值需要和这个容器映射至宿主机上的端口一致**，例如创建这个`Kafka`容器时，将这个容器的`Kafka`端口`9092`映射至了宿主机上的`10000`端口（使用了`-p 10000:9092`参数），那么这个环境变量就要配置为`10000`，默认为`9092`
 
 建议在给环境变量指定值时，将环境变量值用英文双引号`"`包围。
 
@@ -46,16 +52,17 @@ docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config \
 -e ZOOKEEPER_URL="zookeeper0:2181,zookeeper1:2181,zookeeper2:2181"
 ```
 
-### (2) 集群部署
+#### 2. 集群部署
 
 该镜像支持集群部署，多个`Kafka`节点通过在同一个`ZooKeeper`（或同一个`Zookeeper`集群）上注册，就形成了一个集群。
 
 在多个要部署`Kafka`节点的服务器上执行下列命令：
 
 ```bash
-docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config \
+docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
 -e ZOOKEEPER_URL=zookeeper地址和端口 \
 -e KAFKA_HOST=部署Kafka的服务器的外网地址 \
+-e KAFKA_PORT=外部访问Kafka容器的端口 \
 -e BROKER_ID=brokerId \
 -e NUM_PARTITIONS=Topic分区数 \
 swsk33/kafka-standalone
@@ -65,6 +72,30 @@ swsk33/kafka-standalone
 
 - `BROKER_ID` 表示每个`Kafka`节点的`id`，同一个集群中，每个节点的`id`不能重复！`id`为一个整数例如`0`，`1`等等
 - `NUM_PARTITIONS` 指定每个主题的分区数，最好和集群中节点数保持一致
+
+## 2，KRaft模式
+
+KRaft模式无需Zookeeper，仅需运行`Kafka`节点即可构成集群。
+
+### (1) 设定一个集群`id`
+
+首先自定义一个`16`位长度的**只能是纯英文和数字组成**的字符串，例如`abcdefghijklmnop`，然后将这个字符串通过Base64编码，**编码后得到的结果就作为整个集群的`id`**，现在先将这个`id`记下以备用，可以使用这个[在线工具](https://c.runoob.com/front-end/693/)进行Base64编码。
+
+### (2) 创建并运行`Kafka`容器
+
+#### 1. 单机部署
+
+执行下列命令启动：
+
+```bash
+docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e CLUSTER_ID=上述得到的集群id \
+-e KAFKA_HOST=部署Kafka的服务器的外网地址 \
+-e KAFKA_PORT=外部访问Kafka容器的端口 \
+swsk33/kafka-standalone
+```
+
+这里`KAFKA_HOST`和`KAFKA_PORT`参数和上述Zookeeper模式中的是一模一样的，具体说明可以参考上述Zookeeper模式中单机部署部分的参数说明。
 
 ### (3) 全部环境变量配置项
 
