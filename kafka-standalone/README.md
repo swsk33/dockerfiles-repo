@@ -256,7 +256,7 @@ swsk33/kafka-standalone
 |      `BROKER_ID`      | 仅Zookeeper模式 | `Kafka`节点`id`，用于区分同一集群中不同节点（Zookeeper模式） |         `0`         |
 |     `CLUSTER_ID`      |   仅KRaft模式   |      `Kafka`的集群`id`，同一个集群中节点的集群`id`相同       |  `""`（空字符串）   |
 |       `NODE_ID`       |   仅KRaft模式   |   `Kafka`节点`id`，用于区分同一集群中不同节点（KRaft模式）   |         `1`         |
-|     `VOTER_LIST`      |   仅KRaft模式   |        投票者列表，也就是配置整个集群中所有的节点列表        | `1@127.0.0.1:9093`  |
+|     `VOTER_LIST`      |   仅KRaft模式   | 投票者列表，也就是配置整个集群中所有的Controller节点和混合节点列表 | `1@127.0.0.1:9093`  |
 |    `PROCESS_ROLE`     |   仅KRaft模式   | 节点的类型，设置为`broker`或者`controller`分别表示节点为Broker节点和Controller节点，也可以是`broker,controller`表示混合节点 | `broker,controller` |
 |     `KAFKA_HOST`      |    全部模式     |            `Kafka`所在的服务器的外网地址或者域名             |     `127.0.0.1`     |
 |     `KAFKA_PORT`      |    全部模式     |                `Kafka`所在的服务器的外网端口                 |       `9092`        |
