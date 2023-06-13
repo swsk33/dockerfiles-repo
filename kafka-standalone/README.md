@@ -75,7 +75,13 @@ swsk33/kafka-standalone
 
 ## 2，KRaft模式
 
-KRaft模式无需Zookeeper，仅需运行`Kafka`节点即可构成集群。
+KRaft模式无需Zookeeper，仅需运行`Kafka`节点即可构成集群。在KRaft模式的集群中，节点类型分为下面三类：
+
+- Broker节点
+- Controller节点
+- 混合节点
+
+可以通过传递环境变量参数`PROCESS_ROLE`设定该节点的类型，若不传递该环境变量则默认为混合节点，如果对节点类型不太清楚，可以参考[这篇文章](https://juejin.cn/post/7243725952790020133)。
 
 ### (1) 设定一个集群`id`
 
@@ -104,33 +110,56 @@ swsk33/kafka-standalone
 在**多台**需要部署Kafka容器的服务器上执行命令：
 
 ```bash
-docker run -id --name=kafka -p 9092:9092 -p 9093:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+# 部署Broker节点
+docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e PROCESS_ROLE=broker \
 -e CLUSTER_ID=上述得到的集群id \
+-e NODE_ID=这个节点id \
 -e KAFKA_HOST=这个Kafka的服务器的外网地址 \
 -e KAFKA_PORT=外部访问这个Kafka容器的端口 \
+-e VOTER_LIST=集群中全部Controller或者混合节点列表（投票者列表） \
+swsk33/kafka-standalone
+
+# 部署Controller节点
+docker run -id --name=kafka -p 9093:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e PROCESS_ROLE=controller \
+-e CLUSTER_ID=上述得到的集群id \
 -e NODE_ID=这个节点id \
--e VOTER_LIST=集群中全部节点列表（投票者列表） \
+-e VOTER_LIST=集群中全部Controller或者混合节点列表（投票者列表） \
+swsk33/kafka-standalone
+
+# 部署混合节点
+docker run -id --name=kafka -p 9092:9092 -p 9093:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e CLUSTER_ID=上述得到的集群id \
+-e NODE_ID=这个节点id \
+-e KAFKA_HOST=这个Kafka的服务器的外网地址 \
+-e KAFKA_PORT=外部访问这个Kafka容器的端口 \
+-e VOTER_LIST=集群中全部Controller或者混合节点列表（投票者列表） \
 swsk33/kafka-standalone
 ```
 
-可见这里除了暴露`9092`端口之外，还暴露了`9093`端口，这两个端口作用如下：
+可见这里涉及到了两个端口`9092`和`9093`，它们的作用如下：
 
-- `9092`端口：用于客户端（生产者或者消费者）投递消息至Kafka消息队列或者从中取出消息，通常Java集成Kafka客户端时访问该端口
-- `9093`端口：KRaft模式下**投票通信端口**，由于KRaft模式下没有了Zookeeper，因此集群中所有Kafka节点会相互投票选择出存放元数据的节点，即Controller节点，投票时各个Kafka节点之间就通过`9093`端口通信
+- `9092`端口：用于客户端（生产者或者消费者）投递消息至Kafka消息队列或者从中取出消息，通常Java集成Kafka客户端时访问该端口，下文称之为**客户端通信端口**
+- `9093`端口：KRaft模式下节点直接投票选举通信或者是从Controller节点获取元数据的端口，由于KRaft模式下没有了Zookeeper，因此集群中所有Kafka节点会相互投票选择出存放和管理元数据的Controller节点，这个端口就是用于投票选举时的相互通信或者从Controller节点获取元数据，下文称之为**控制器端口**
 
 上述除了`KAFKA_HOST`和`KAFKA_PORT`和前面的意义相同之外，其它配置说明如下：
 
 - `CLUSTER_ID` 集群`id`，一个集群内所有的节点配置的集群`id`必须相同
 - `NODE_ID` 节点`id`，一个集群内所有节点`id`不能够重复，且这个`id`需要是不小于`1`的整数（类似上述Zookeeper的`BROKER_ID`配置）
-- `VOTER_LIST` 投票者列表，也就是配置**整个集群中所有的节点列表**，配置格式为`节点1的id@节点1地址:节点1端口,节点2的id@节点2地址:节点2端口,节点3的id@节点3地址:节点3端口...`，这里端口要写节点的**投票通信端口**
+- `VOTER_LIST` 投票者列表，也就是配置**整个集群中所有的Controller节点和混合节点列表**（不需要将Broker节点配置进去），配置格式为`节点1的id@节点1地址:节点1端口,节点2的id@节点2地址:节点2端口,节点3的id@节点3地址:节点3端口...`，这里端口要写节点的**控制器端口**
 
-这里给出一个示例，假设要在**三台服务器**上面配置下列集群，集群`id`为`YWJjZGVmZ2hpamtsbW5vcA==`：
+下面给出2个示例。
 
-| 节点`id` | 节点外网地址 | 容器`9092`端口映射到的宿主机端口 | 容器`9093`端口映射到的宿主机端口 |
-| :------: | :----------: | :------------------------------: | :------------------------------: |
-|   `1`    |   `kafka1`   |              `9001`              |             `10001`              |
-|   `2`    |   `kafka2`   |              `9002`              |             `10002`              |
-|   `3`    |   `kafka3`   |              `9003`              |             `10003`              |
+##### a. 全混合节点集群
+
+假设要在**三台服务器**上面配置下列集群，集群`id`为`YWJjZGVmZ2hpamtsbW5vcA==`：
+
+| 节点`id` | 节点外网地址 | 节点类型 | 容器`9092`端口映射到的宿主机端口 | 容器`9093`端口映射到的宿主机端口 |
+| :------: | :----------: | :------: | :------------------------------: | :------------------------------: |
+|   `1`    |   `kafka1`   | 混合节点 |              `9001`              |             `10001`              |
+|   `2`    |   `kafka2`   | 混合节点 |              `9002`              |             `10002`              |
+|   `3`    |   `kafka3`   | 混合节点 |              `9003`              |             `10003`              |
 
 则依次在三台服务器上面执行命令：
 
@@ -150,7 +179,7 @@ docker run -id --name=kafka -p 9002:9092 -p 10002:9093 -v kafka-config:/kafka/co
 -e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
 -e KAFKA_HOST=kafka2 \
 -e KAFKA_PORT=9002 \
--e NODE_ID=1 \
+-e NODE_ID=2 \
 -e VOTER_LIST=1@kafka1:10001,2@kafka2:10002,3@kafka3:10003 \
 -e NUM_PARTITIONS=3 \
 swsk33/kafka-standalone
@@ -160,16 +189,61 @@ docker run -id --name=kafka -p 9003:9092 -p 10003:9093 -v kafka-config:/kafka/co
 -e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
 -e KAFKA_HOST=kafka3 \
 -e KAFKA_PORT=9003 \
--e NODE_ID=1 \
+-e NODE_ID=3 \
 -e VOTER_LIST=1@kafka1:10001,2@kafka2:10002,3@kafka3:10003 \
 -e NUM_PARTITIONS=3 \
+swsk33/kafka-standalone
+```
+
+##### b. 手动设定每个节点类型的集群
+
+现在同样是要在**三台服务器**上面配置下列集群，集群`id`为`YWJjZGVmZ2hpamtsbW5vcA==`：
+
+| 节点`id` | 节点外网地址 |  节点类型  | 容器`9092`端口映射到的宿主机端口 | 容器`9093`端口映射到的宿主机端口 |
+| :------: | :----------: | :--------: | :------------------------------: | :------------------------------: |
+|   `1`    |   `kafka1`   | Controller |              不暴露              |             `10001`              |
+|   `2`    |   `kafka2`   |   Broker   |              `9002`              |              不暴露              |
+|   `3`    |   `kafka3`   |   Broker   |              `9003`              |              不暴露              |
+
+则依次在三台服务器上面执行命令：
+
+```bash
+# 服务器1
+docker run -id --name=kafka -p 10001:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e PROCESS_ROLE=controller \
+-e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
+-e NODE_ID=1 \
+-e VOTER_LIST=1@kafka1:10001 \
+swsk33/kafka-standalone
+
+# 服务器2
+docker run -id --name=kafka -p 9002:9092 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e PROCESS_ROLE=broker \
+-e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
+-e KAFKA_HOST=kafka2 \
+-e KAFKA_PORT=9002 \
+-e NODE_ID=2 \
+-e VOTER_LIST=1@kafka1:10001 \
+-e NUM_PARTITIONS=2 \
+swsk33/kafka-standalone
+
+# 服务器3
+docker run -id --name=kafka -p 9003:9092 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e PROCESS_ROLE=broker \
+-e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
+-e KAFKA_HOST=kafka3 \
+-e KAFKA_PORT=9003 \
+-e NODE_ID=3 \
+-e VOTER_LIST=1@kafka1:10001 \
+-e NUM_PARTITIONS=2 \
 swsk33/kafka-standalone
 ```
 
 可见这里有下列注意事项：
 
 - `KAFKA_HOST`和`KAFKA_PORT`都是**Kafka对外广播的该节点的外网地址和端口**，当客户端连接这个Kafka节点时，先会从该节点Kafka广播的外网地址和端口尝试连接到Kafka，所以`KAFKA_HOST`要填写所在服务器外网地址或者域名，而`KAFKA_PORT`要填写容器`9092`端口映射到的宿主机的端口，否则客户端不能正确通过服务器访问到Kafka容器
-- `VOTER_LIST`中的地址也是需要填写Kafka节点所在服务器外网地址，端口则是每个节点的投票通信端口`9093`所映射到的宿主机端口，这样所有的Kafka节点之间才能通过外网正确地互相通信完成投票
+- Controller节点**不需要**配置`KAFKA_HOST`和`KAFKA_PORT`这两项，而Broker节点和混合节点必须要配置这两项
+- `VOTER_LIST`中的地址也是需要填写Kafka的Controller或者混合节点所在服务器外网地址，端口则是每个节点的投票通信端口`9093`所映射到的宿主机端口，这样所有的Kafka节点之间才能通过外网正确地互相通信，该配置中的节点列表只包含Controller节点或者混合节点（同时担任Broker和Controller角色的节点）
 - 这里的示例将`9092`和`9093`映射至宿主机其它端口上了，主要是需要大家明白`KAFKA_HOST`、`KAFKA_PORT`和`VOTER_LIST`中配置的地址和端口与宿主机映射端口的对应关系，在生产环境中建议直接把容器`9092`和`9093`端口映射至宿主机上同样的端口号上去，方便操作
 
 ## 3， 全部环境变量配置项
@@ -183,7 +257,7 @@ swsk33/kafka-standalone
 |     `CLUSTER_ID`      |   仅KRaft模式   |      `Kafka`的集群`id`，同一个集群中节点的集群`id`相同       |  `""`（空字符串）   |
 |       `NODE_ID`       |   仅KRaft模式   |   `Kafka`节点`id`，用于区分同一集群中不同节点（KRaft模式）   |         `1`         |
 |     `VOTER_LIST`      |   仅KRaft模式   |        投票者列表，也就是配置整个集群中所有的节点列表        | `1@127.0.0.1:9093`  |
-|    `PROCESS_ROLE`     |   仅KRaft模式   | 节点的类型，设置为`broker`或者`controller`分别表示节点为代理者和控制器，也可以是`broker,controller`使其自适应 | `broker,controller` |
+|    `PROCESS_ROLE`     |   仅KRaft模式   | 节点的类型，设置为`broker`或者`controller`分别表示节点为Broker节点和Controller节点，也可以是`broker,controller`表示混合节点 | `broker,controller` |
 |     `KAFKA_HOST`      |    全部模式     |            `Kafka`所在的服务器的外网地址或者域名             |     `127.0.0.1`     |
 |     `KAFKA_PORT`      |    全部模式     |                `Kafka`所在的服务器的外网端口                 |       `9092`        |
 |  `SEND_BUFFER_BYTE`   |    全部模式     |           每次发送的数据包的最大大小（单位：字节）           |      `102400`       |
