@@ -56,7 +56,7 @@ docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -v kafka-
 
 该镜像支持集群部署，多个`Kafka`节点通过在同一个`ZooKeeper`（或同一个`Zookeeper`集群）上注册，就形成了一个集群。
 
-在多个要部署`Kafka`节点的服务器上执行下列命令：
+在**多个**要部署`Kafka`节点的服务器上执行下列命令：
 
 ```bash
 docker run -id --name=kafka -p 9092:9092 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
@@ -71,7 +71,7 @@ swsk33/kafka-standalone
 除了之前的一些必要配置之外，这里还需要注意：
 
 - `BROKER_ID` 表示每个`Kafka`节点的`id`，同一个集群中，每个节点的`id`不能重复！`id`为一个整数例如`0`，`1`等等
-- `NUM_PARTITIONS` 指定每个主题的分区数，最好和集群中节点数保持一致
+- `NUM_PARTITIONS` 指定每个主题的分区数，最好和集群中节点数保持一致，这个参数是**可选的**
 
 ## 2，KRaft模式
 
@@ -97,29 +97,127 @@ swsk33/kafka-standalone
 
 这里`KAFKA_HOST`和`KAFKA_PORT`参数和上述Zookeeper模式中的是一模一样的，具体说明可以参考上述Zookeeper模式中单机部署部分的参数说明。
 
-### (3) 全部环境变量配置项
+#### 2. 集群部署
+
+同样地，在KRaft模式下，在多个不同服务器上面运行Kafka容器并配置同一个集群`id`，这些Kafka容器就构成了一个集群。
+
+在**多台**需要部署Kafka容器的服务器上执行命令：
+
+```bash
+docker run -id --name=kafka -p 9092:9092 -p 9093:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e CLUSTER_ID=上述得到的集群id \
+-e KAFKA_HOST=这个Kafka的服务器的外网地址 \
+-e KAFKA_PORT=外部访问这个Kafka容器的端口 \
+-e NODE_ID=这个节点id \
+-e VOTER_LIST=集群中全部节点列表（投票者列表） \
+swsk33/kafka-standalone
+```
+
+可见这里除了暴露`9092`端口之外，还暴露了`9093`端口，这两个端口作用如下：
+
+- `9092`端口：用于客户端（生产者或者消费者）投递消息至Kafka消息队列或者从中取出消息，通常Java集成Kafka客户端时访问该端口
+- `9093`端口：KRaft模式下**投票通信端口**，由于KRaft模式下没有了Zookeeper，因此集群中所有Kafka节点会相互投票选择出存放元数据的节点，即Controller节点，投票时各个Kafka节点之间就通过`9093`端口通信
+
+上述除了`KAFKA_HOST`和`KAFKA_PORT`和前面的意义相同之外，其它配置说明如下：
+
+- `CLUSTER_ID` 集群`id`，一个集群内所有的节点配置的集群`id`必须相同
+- `NODE_ID` 节点`id`，一个集群内所有节点`id`不能够重复，且这个`id`需要是不小于`1`的整数（类似上述Zookeeper的`BROKER_ID`配置）
+- `VOTER_LIST` 投票者列表，也就是配置**整个集群中所有的节点列表**，配置格式为`节点1的id@节点1地址:节点1端口,节点2的id@节点2地址:节点2端口,节点3的id@节点3地址:节点3端口...`，这里端口要写节点的**投票通信端口**
+
+这里给出一个示例，假设要在**三台服务器**上面配置下列集群，集群`id`为`YWJjZGVmZ2hpamtsbW5vcA==`：
+
+| 节点`id` | 节点外网地址和端口 | 容器`9092`端口映射到的宿主机端口 | 容器`9093`端口映射到的宿主机端口 |
+| :------: | :----------------: | :------------------------------: | :------------------------------: |
+|   `1`    |      `kafka1`      |              `9001`              |             `10001`              |
+|   `2`    |      `kafka2`      |              `9002`              |             `10002`              |
+|   `3`    |      `kafka3`      |              `9003`              |             `10003`              |
+
+则依次在三台服务器上面执行命令：
+
+```bash
+# 服务器1
+docker run -id --name=kafka -p 9001:9092 -p 10001:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
+-e KAFKA_HOST=kafka1 \
+-e KAFKA_PORT=9001 \
+-e NODE_ID=1 \
+-e VOTER_LIST=1@kafka1:10001,2@kafka2:10002,3@kafka3:10003 \
+-e NUM_PARTITIONS=3 \
+swsk33/kafka-standalone
+
+# 服务器2
+docker run -id --name=kafka -p 9002:9092 -p 10002:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
+-e KAFKA_HOST=kafka2 \
+-e KAFKA_PORT=9002 \
+-e NODE_ID=1 \
+-e VOTER_LIST=1@kafka1:10001,2@kafka2:10002,3@kafka3:10003 \
+-e NUM_PARTITIONS=3 \
+swsk33/kafka-standalone
+
+# 服务器3
+docker run -id --name=kafka -p 9003:9092 -p 10003:9093 -v kafka-config:/kafka/config -v kafka-logs:/tmp/kafka-logs -v kraft-meta:/tmp/kraft-combined-logs \
+-e CLUSTER_ID=YWJjZGVmZ2hpamtsbW5vcA== \
+-e KAFKA_HOST=kafka3 \
+-e KAFKA_PORT=9003 \
+-e NODE_ID=1 \
+-e VOTER_LIST=1@kafka1:10001,2@kafka2:10002,3@kafka3:10003 \
+-e NUM_PARTITIONS=3 \
+swsk33/kafka-standalone
+```
+
+可见这里有下列注意事项：
+
+- `KAFKA_HOST`和`KAFKA_PORT`都是**Kafka对外广播的该节点的外网地址和端口**，当客户端连接这个Kafka节点时，先会从该节点Kafka广播的外网地址和端口尝试连接到Kafka，所以`KAFKA_HOST`要填写所在服务器外网地址或者域名，而`KAFKA_PORT`要填写容器`9092`端口映射到的宿主机的端口，否则客户端不能正确通过服务器访问到Kafka容器
+- `VOTER_LIST`中的地址也是需要填写Kafka节点所在服务器外网地址，端口则是每个节点的投票通信端口`9093`所映射到的宿主机端口，这样所有的Kafka节点之间才能通过外网正确地互相通信完成投票
+- 这里的示例将`9092`和`9093`映射至宿主机其它端口上了，主要是需要大家明白`KAFKA_HOST`、`KAFKA_PORT`和`VOTER_LIST`中配置的地址和端口与宿主机映射端口的对应关系，在生产环境中建议直接把容器`9092`和`9093`端口映射至宿主机上同样的端口号上去，方便操作
+
+## 3， 全部环境变量配置项
 
 这里列出所有的可以通过指定环境变量来完成配置的配置项：
 
-|      环境变量名       |                  配置意义                   |      默认值      |
-| :-------------------: | :-----------------------------------------: | :--------------: |
-|    `ZOOKEEPER_URL`    |    `Kafka`所使用的Zookeeper的地址和端口     | `127.0.0.1:2181` |
-|     `KAFKA_HOST`      |        `Kafka`所在的服务器的外网地址        |   `127.0.0.1`    |
-|      `BROKER_ID`      | `Kafka`节点`id`，用于区分同一集群中不同节点 |       `0`        |
-|  `SEND_BUFFER_BYTE`   |  每次发送的数据包的最大大小（单位：字节）   |     `102400`     |
-| `RECEIVE_BUFFER_BYTE` |  每次接收的数据包的最大大小（单位：字节）   |     `102400`     |
-|  `REQUEST_MAX_BYTES`  |      接收的最大请求大小（单位：字节）       |   `104857600`    |
-|   `NUM_PARTITIONS`    |           每个`Topic`的默认分区数           |       `1`        |
+|      环境变量名       | 生效的集群模式  |                           配置意义                           |       默认值        |
+| :-------------------: | :-------------: | :----------------------------------------------------------: | :-----------------: |
+|    `ZOOKEEPER_URL`    | 仅Zookeeper模式 |             `Kafka`所使用的Zookeeper的地址和端口             |  `127.0.0.1:2181`   |
+|      `BROKER_ID`      | 仅Zookeeper模式 | `Kafka`节点`id`，用于区分同一集群中不同节点（Zookeeper模式） |         `0`         |
+|     `CLUSTER_ID`      |   仅KRaft模式   |      `Kafka`的集群`id`，同一个集群中节点的集群`id`相同       |  `""`（空字符串）   |
+|       `NODE_ID`       |   仅KRaft模式   |   `Kafka`节点`id`，用于区分同一集群中不同节点（KRaft模式）   |         `1`         |
+|     `VOTER_LIST`      |   仅KRaft模式   |        投票者列表，也就是配置整个集群中所有的节点列表        | `1@127.0.0.1:9093`  |
+|    `PROCESS_ROLE`     |   仅KRaft模式   | 节点的类型，设置为`broker`或者`controller`分别表示节点为代理者和控制器，也可以是`broker,controller`使其自适应 | `broker,controller` |
+|     `KAFKA_HOST`      |    全部模式     |            `Kafka`所在的服务器的外网地址或者域名             |     `127.0.0.1`     |
+|     `KAFKA_PORT`      |    全部模式     |                `Kafka`所在的服务器的外网端口                 |       `9092`        |
+|  `SEND_BUFFER_BYTE`   |    全部模式     |           每次发送的数据包的最大大小（单位：字节）           |      `102400`       |
+| `RECEIVE_BUFFER_BYTE` |    全部模式     |           每次接收的数据包的最大大小（单位：字节）           |      `102400`       |
+|  `REQUEST_MAX_BYTES`  |    全部模式     |               接收的最大请求大小（单位：字节）               |     `104857600`     |
+|   `NUM_PARTITIONS`    |    全部模式     |                   每个`Topic`的默认分区数                    |         `1`         |
 
 如果不需要改变某个配置的值，就不需要在容器创建时指定这个环境变量，其它配置可以通过修改配置文件的方式完成，修改配置文件的方式见下一节。
 
-## 3，修改配置文件
+## 4，数据清除
+
+如果遇到容器无法启动等情况，可以先停止容器，然后清空数据再试。
+
+按照上述所有命令完成配置后，数据文件的数据卷位置如下：
+
+- `Kafka`消息数据：`/var/lib/docker/volumes/kafka-logs/_data`
+- `KRaft`元数据信息：`/var/lib/docker/volumes/kraft-meta/_data`
+
+停止容器后，执行下列命令删除所有容器数据：
+
+```bash
+rm -rf /var/lib/docker/volumes/kafka-logs/_data/*
+rm -rf /var/lib/docker/volumes/kraft-meta/_data/*
+```
+
+再重启容器。
+
+## 5，配置文件
 
 根据上述配置之后，配置文件数据卷位于`/var/lib/docker/volumes/kafka-config/_data`目录下，可以按需修改其中的配置文件，然后重启容器即可。
 
 配置文件官方文档：[传送门](https://kafka.apache.org/documentation/#configuration)
 
-## 4，常用命令
+## 6，常用命令
 
 上述创建的容器名为`kafka`，若你的容器名不是这个，请在下列命令中把`kafka`替换成自己的容器名。
 
