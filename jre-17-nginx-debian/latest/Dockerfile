@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 RUN apt update \
 	&& apt install -y --no-install-recommends gnupg gnupg2 ca-certificates curl lsb-release debian-archive-keyring \
 	&& mkdir /keys \
