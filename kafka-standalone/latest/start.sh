@@ -17,6 +17,8 @@ else
 	if [ "$PROCESS_ROLE" = "broker" ]; then
 		echo 当前节点为Broker类型！
 		CONFIG_FILE=config/kraft/broker.properties
+		# 将Broker的监听地址设定为所有
+		sed -i "/^listeners=/s/.*/listeners=PLAINTEXT:\/\/:9092/" $CONFIG_FILE
 	elif [ "$PROCESS_ROLE" = "controller" ]; then
 		echo 当前节点为Controller类型！
 		CONFIG_FILE=config/kraft/controller.properties

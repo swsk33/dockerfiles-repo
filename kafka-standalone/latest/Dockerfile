@@ -2,10 +2,10 @@ FROM azul/zulu-openjdk-alpine:17-jre-headless-latest
 ADD start.sh /
 RUN apk add --no-cache bash \
 	&& mkdir /kafka \
-	&& wget -O /kafka.tgz https://downloads.apache.org/kafka/3.4.1/kafka_2.13-3.4.1.tgz \
+	&& wget -O /kafka.tgz https://downloads.apache.org/kafka/3.5.1/kafka_2.13-3.5.1.tgz \
 	&& tar -xzvf kafka.tgz -C ./kafka/ --strip-components 1 \
 	&& chmod +x /start.sh \
-	&& rm -rf kafka.tgz /var/cache/apk/*
+	&& rm -rf kafka.tgz /kafka/site-docs/ /var/cache/apk/*
 EXPOSE 9092
 EXPOSE 9093
 # 环境变量
