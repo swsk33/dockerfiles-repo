@@ -9,7 +9,7 @@ RUN apt update \
 	&& echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | tee /etc/apt/sources.list.d/zulu.list \
 	&& echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/debian bookworm nginx" | tee /etc/apt/sources.list.d/nginx.list \
 	&& apt update \
-	&& apt install -y --no-install-recommends nginx zulu17-ca-jre-headless \
+	&& apt install -y --no-install-recommends nginx zulu21-ca-jre-headless \
 	&& apt clean \
 	&& rm -rf /var/lib/apt/lists/* /keys/
 ENV LANG C.UTF-8

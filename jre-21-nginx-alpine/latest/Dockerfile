@@ -6,7 +6,7 @@ RUN apk update \
 	&& printf "%s%s%s%s\n" "@nginx " "http://nginx.org/packages/alpine/v" `egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release` "/main" | tee -a /etc/apk/repositories \
 	&& echo "https://repos.azul.com/zulu/alpine" | tee -a /etc/apk/repositories \
 	&& apk update \
-	&& apk --no-cache add nginx@nginx zulu17-ca-jre-headless \
+	&& apk --no-cache add nginx@nginx zulu21-ca-jre-headless \
 	&& rm -rf /var/cache/apk/*
 ENV LANG C.UTF-8
 EXPOSE 80
