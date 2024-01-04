@@ -26,7 +26,7 @@ docker run -id --name=shardingsphere-proxy \
 	-p 3307:3307 \
 	-v shardingsphere-config:/shardingsphere-proxy/conf \
 	-v shardingsphere-extlib:/shardingsphere-proxy/ext-lib \
-	-v shardingshpere-logs:/shardingsphere-proxy/logs \
+	-v shardingsphere-logs:/shardingsphere-proxy/logs \
 swsk33/shardingsphere-proxy-standalone
 ```
 
