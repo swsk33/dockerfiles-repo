@@ -2,7 +2,7 @@ FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
 ADD start.sh /
 RUN apk add --no-cache bash \
 	&& mkdir /kafka \
-	&& wget -O /kafka.tgz https://downloads.apache.org/kafka/3.6.0/kafka_2.13-3.6.0.tgz \
+	&& wget -O /kafka.tgz https://downloads.apache.org/kafka/3.6.1/kafka_2.13-3.6.1.tgz \
 	&& tar -xzvf kafka.tgz -C ./kafka/ --strip-components 1 \
 	&& chmod +x /start.sh \
 	&& rm -rf kafka.tgz /kafka/site-docs/ /var/cache/apk/*

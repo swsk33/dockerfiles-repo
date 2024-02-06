@@ -2,7 +2,7 @@
 
 这是一个Alibaba Nacos单机镜像，用于快速在服务器上部署一个单机Nacos实例。
 
-- [官方文档](https://nacos.io/zh-cn/docs/what-is-nacos.html)
+- [官方文档](https://nacos.io/docs/latest/quickstart/quick-start/)
 - [Dockerfile文件](https://github.com/swsk33/dockerfiles-repo/blob/master/nacos-standalone/Dockerfile)
 
 ## 说明
@@ -25,7 +25,7 @@ docker run -id --name=nacos -p 8848:8848 -p 9848:9848 -v nacos-config:/nacos/con
 
 根据上述配置之后，配置文件位于`/var/lib/docker/volumes/nacos-config/_data`目录下，如果只是简单使用无需修改配置。
 
-如果需要配置数据库等等，则需要修改配置文件，参考[官网](https://nacos.io/zh-cn/docs/deployment.html)修改配置。
+如果需要配置数据库等等，则需要修改配置文件，参考[官网](https://nacos.io/docs/latest/guide/admin/deployment/)修改配置。
 
 ## 4，常见问题
 
@@ -37,12 +37,33 @@ docker run -id --name=nacos -p 8848:8848 -p 9848:9848 -v nacos-config:/nacos/con
 db.url.0=jdbc:mysql://地址:3306/nacos?serverTimezone=GMT%2B8
 ```
 
-### (2) `2.2.0.1`版本启动失败
+### (2) 开启鉴权
 
-新的`2.2.0.1`版本需要手动添加一个Base64加密后的密钥配置，否则无法启动。详情见[官方文档说明](https://nacos.io/zh-cn/docs/v2/guide/user/auth.html)。
+自`2.2.2`版本开始，在未开启鉴权时，**默认控制台将不需要登录即可访问**，同时在控制台中给予提示，提醒用户当前集群未开启鉴权。因此如需开启鉴权，请按照下列方式修改配置文件。
 
-自定义的密钥需要为**Base64编码**的字符串，且**原始密钥长度不得低于32字符**。
+首先找到`nacos.core.auth.enabled`配置项，将其值修改为`true`以**开启鉴权**：
 
-先到[Base64编码工具](https://c.runoob.com/front-end/693/)中，将一个不低于32长度的自定义字符串（作为你的密钥）加密为Base64，然后找到配置文件中`nacos.core.auth.plugin.nacos.token.secret.key`这个配置项，粘贴即可。
+```properties
+nacos.core.auth.enabled=true
+```
+
+然后找到`nacos.core.auth.plugin.nacos.token.secret.key`配置项配置一个自定义的**Token密钥**，建议为Base64编码字符串，且**原始密钥长度不得低于32字符**，可以到[Base64编码工具](https://c.runoob.com/front-end/693/)中，将一个不低于32长度的自定义字符串（作为你的密钥）加密为Base64，然后粘贴至该配置项，例如：
+
+```properties
+nacos.core.auth.plugin.nacos.token.secret.key=YWJjZGVmZ2hpamtsbW5vcGFiY2RlZmdoaWprbG1ub3A=
+```
+
+最后找到`nacos.core.auth.server.identity.key`和`nacos.core.auth.server.identity.value`这两个配置项，它们分别表示**服务身份识别的`key`和`value`**，自拟一个值即可，例如：
+
+```properties
+nacos.core.auth.server.identity.key=my-key
+nacos.core.auth.server.identity.value=my-value
+```
+
+需要注意的是，如果搭建集群，需要保证同一集群中每个Nacos节点的下列配置的值**完全一致**：
+
+- `nacos.core.auth.plugin.nacos.token.secret.key`
+- `nacos.core.auth.server.identity.key`
+- `nacos.core.auth.server.identity.value`
 
 修改完成配置后记得重启容器！
