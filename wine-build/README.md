@@ -3,7 +3,7 @@
 该容器为基于Debian 12镜像制作的Wine构建环境，可以在该环境中完成Wine源码的构建。
 
 - [官方文档](https://wiki.winehq.org/Building_Wine)
-- [Dockerfile文件](https://github.com/swsk33/dockerfiles-repo/blob/master/wine-build/latest/Dockerfile)
+- [Dockerfile文件](https://github.com/swsk33/dockerfiles-repo/blob/master/wine-build)
 
 # 说明
 
