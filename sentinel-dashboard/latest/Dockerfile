@@ -1,6 +1,6 @@
 FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
 RUN mkdir /sentinel \
-	&& wget -O /sentinel/sentinel-dashboard.jar https://github.com/alibaba/Sentinel/releases/download/1.8.7/sentinel-dashboard-1.8.7.jar
+	&& wget -O /sentinel/sentinel-dashboard.jar https://github.com/alibaba/Sentinel/releases/download/1.8.8/sentinel-dashboard-1.8.8.jar
 EXPOSE 8849
 EXPOSE 8719
 WORKDIR /sentinel/
