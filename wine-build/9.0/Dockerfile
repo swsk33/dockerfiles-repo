@@ -1,14 +1,16 @@
 FROM debian
 # 准备环境
-RUN apt update \
-	# 安装证书
-	&& apt install -y ca-certificates \
-	# 替换软件源
-	&& echo "Types: deb" > /etc/apt/sources.list.d/debian.sources \
-	&& echo "URIs: https://mirror.tuna.tsinghua.edu.cn/debian" >> /etc/apt/sources.list.d/debian.sources \
+# 替换软件源
+RUN echo "Types: deb" > /etc/apt/sources.list.d/debian.sources \
+	&& echo "URIs: http://mirror.tuna.tsinghua.edu.cn/debian" >> /etc/apt/sources.list.d/debian.sources \
 	&& echo "Suites: bookworm bookworm-updates bookworm-proposed-updates bookworm-backports bookworm-backports-sloppy" >> /etc/apt/sources.list.d/debian.sources \
 	&& echo "Components: main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/debian.sources \
 	&& echo "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" >> /etc/apt/sources.list.d/debian.sources \
+	# 安装证书
+	&& apt update \
+	&& apt install -y ca-certificates \
+	# 修改软件源
+	&& sed -i 's/http/https/g' /etc/apt/sources.list.d/debian.sources \
 	&& dpkg --add-architecture i386 \
 	&& apt update \
 	&& apt full-upgrade -y \
@@ -35,6 +37,11 @@ RUN apt update \
 	libxrandr-dev libxrandr-dev:i386 \
 	libxrender-dev libxrender-dev:i386 \
 	libxext-dev libxext-dev:i386 \
+	libwayland-bin \
+	libwayland-dev libwayland-dev:i386 \
+	libegl-dev libegl-dev:i386 \
+	libxkbcommon-dev libxkbcommon-dev:i386 \
+	libxkbregistry-dev libxkbregistry-dev:i386 \
 	libgstreamer1.0-dev libgstreamer1.0-dev:i386 libgstreamer-plugins-base1.0-dev \
 	libosmesa6-dev libosmesa6-dev:i386 \
 	libsdl2-dev libsdl2-dev:i386 \
