@@ -5,6 +5,7 @@
 - [官方文档](https://minecraft.fandom.com/wiki/Tutorials/Setting_up_a_server)
 - Dockerfile文件
 	- [1.19.2](https://github.com/swsk33/dockerfiles-repo/blob/master/minecraft-server/1.19.2/Dockerfile)
+	- [1.21.4](https://github.com/swsk33/dockerfiles-repo/blob/master/minecraft-server/1.21.4/Dockerfile)
 
 # 说明
 
@@ -25,10 +26,27 @@ docker volume create minecraft-data
 通过下列命令：
 
 ```bash
-docker run -itd --name=minecraft-server -p 25565:25565 -v minecraft-data:/minecraft/data swsk33/minecraft-server
+docker run -itd --name minecraft-server \
+	-p 25565:25565 \
+	-v minecraft-data:/minecraft/data \
+	swsk33/minecraft-server
 ```
 
 第一次需要等待世界创建，过几分钟服务端即启动，可以通过游戏连接。
+
+此外，可以指定环境变量`JVM_MIN`和`JVM_MAX`来限制服务端所使用的最小启动堆内存和最大堆内存，也就是`java`命令的`-Xms`和`-Xmx`参数值：
+
+```bash
+# 限制堆内存范围为1G ~ 2G
+docker run -itd --name minecraft-server \
+	-p 25565:25565 \
+	-e JVM_MIN=1G \
+	-e JVM_MAX=2G \
+	-v minecraft-data:/minecraft/data \
+	swsk33/minecraft-server
+```
+
+默认情况下，最小启动堆内存限制为`256M`，最大为`512M`。
 
 ## 3，修改配置文件
 
