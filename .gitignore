@@ -10,3 +10,4 @@
 
 # 允许个别
 !/minecraft-server/timezone.tar
+!/minecraft-fabric-server/timezone.tar
