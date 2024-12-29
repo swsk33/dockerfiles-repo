@@ -1,8 +1,12 @@
-/**/*.tar
-/**/*.gz
-/**/*.xz
-/**/*.bzip2
-/**/*.7z
-/**/*.zip
-/**/*.rar
-/**/*.jar
+# 忽略常用构建产物/下载文件
+*.tar
+*.gz
+*.xz
+*.bzip2
+*.7z
+*.zip
+*.rar
+*.jar
+
+# 允许个别
+!/minecraft-server/timezone.tar

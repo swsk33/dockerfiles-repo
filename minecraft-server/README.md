@@ -29,10 +29,13 @@ docker volume create minecraft-data
 docker run -itd --name minecraft-server \
 	-p 25565:25565 \
 	-v minecraft-data:/minecraft/data \
+	-e EULA=true \
 	swsk33/minecraft-server
 ```
 
 第一次需要等待世界创建，过几分钟服务端即启动，可以通过游戏连接。
+
+需要指定`EULA`环境变量为`true`，表示你同意[Minecraft的最终用户许可协议](https://aka.ms/MinecraftEULA)，否则将无法启动服务端。
 
 此外，可以指定环境变量`JVM_MIN`和`JVM_MAX`来限制服务端所使用的最小启动堆内存和最大堆内存，也就是`java`命令的`-Xms`和`-Xmx`参数值：
 
@@ -42,6 +45,7 @@ docker run -itd --name minecraft-server \
 	-p 25565:25565 \
 	-e JVM_MIN=1G \
 	-e JVM_MAX=2G \
+	-e EULA=true \
 	-v minecraft-data:/minecraft/data \
 	swsk33/minecraft-server
 ```
