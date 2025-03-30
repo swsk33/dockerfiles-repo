@@ -6,6 +6,7 @@
 - Dockerfile文件
 	- [1.19.2](https://github.com/swsk33/dockerfiles-repo/blob/master/minecraft-server/1.19.2/Dockerfile)
 	- [1.21.4](https://github.com/swsk33/dockerfiles-repo/blob/master/minecraft-server/1.21.4/Dockerfile)
+	- [1.21.5](https://github.com/swsk33/dockerfiles-repo/blob/master/minecraft-server/1.21.5/Dockerfile)
 
 # 说明
 
