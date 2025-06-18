@@ -1,5 +1,8 @@
+# 构建参数：Java版本
+ARG build_java_version=17
+
 # 阶段1：构建
-FROM bellsoft/liberica-openjdk-debian:17 AS builder
+FROM bellsoft/liberica-openjdk-debian:${build_java_version} AS builder
 # 初始化构建环境
 ADD debian.sources /etc/apt/sources.list.d/debian.sources
 RUN apt update
@@ -23,13 +26,14 @@ RUN cd /gdal-src \
 	&& make install
 
 # 阶段2：运行环境
-FROM bellsoft/liberica-openjre-debian:17
+FROM bellsoft/liberica-openjre-debian:${build_java_version}
 # 初始化软件源
 ADD debian.sources /etc/apt/sources.list.d/debian.sources
+ENV DEBIAN_FRONTEND=noninteractive
 # 安装运行依赖
 RUN apt update \
 	&& apt full-upgrade -y \
-	&& apt install -y libproj25 libarchive13 libarmadillo11 \
+	&& apt install -y tzdata libproj25 libarchive13 libarmadillo11 \
 	libblosc1 libcurl4 libcrypto++8 libdeflate0 libexpat1 \
 	libfreexl1 libfyba0 libgeotiff5 libgeos3.11.1 libgeos-c1v5 \
 	libgif7 libheif1 libhdf4-0 libhdf5-103-1 libjpeg62-turbo \
@@ -41,8 +45,11 @@ RUN apt update \
 # 拷贝程序
 COPY --from=builder /gdal-install/. /usr/local/
 # 配置环境变量
+# 运行库环境变量
 ENV LD_LIBRARY_PATH=/usr/local/lib
 ENV GDAL_DATA=/usr/local/share/gdal
 ENV JAVA_TOOL_OPTIONS="-Djava.library.path=/usr/local/lib:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib:/usr/local/lib/jni"
+# 系统环境变量
+ENV TZ="Asia/Shanghai"
 ENV LANG=C.UTF-8
 CMD ["bash"]
