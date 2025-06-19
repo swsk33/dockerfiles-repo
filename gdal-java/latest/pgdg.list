@@ -1,0 +1,1 @@
+deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc arch=amd64] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main
