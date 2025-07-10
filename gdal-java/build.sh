@@ -28,23 +28,14 @@ fi
 # 镜像信息
 image_version=${gdal_version}-${java_version}
 image_name=swsk33/gdal-java
-echo 正在构建...
 
-# 检查代理
-if [ -z "${http_proxy}" -o -z "${https_proxy}" ]; then
-	docker build \
-		--build-arg build_java_version=${java_version} \
-		-f ./latest/Dockerfile -t $image_name:$image_version ./latest/
-else
-	echo 将使用代理构建...
-	docker build \
-		--network host \
-		--build-arg build_java_version=${java_version} \
-		--build-arg http_proxy=${http_proxy} \
-		--build-arg https_proxy=${https_proxy} \
-		-f ./latest/Dockerfile -t $image_name:$image_version ./latest/
-fi
+# 加载构建函数
+source ../sh-build-utils
 
-echo 创建latest Tag...
-docker tag $image_name:$image_version $image_name
-echo 构建完成！
+# 指定相关额外构建参数
+declare -A build_arg_map
+build_arg_map["build_java_version"]="$java_version"
+build_arg_map["gdal_version"]="$gdal_version"
+
+# 执行构建
+build_docker_image "$image_name" "$image_version" Dockerfile latest build_arg_map

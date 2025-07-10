@@ -1,5 +1,8 @@
-# 构建参数：Java版本
+# 构建参数
+# Java版本
 ARG build_java_version=17
+# GDAL版本
+ARG gdal_version=3.11.1
 
 # 阶段1：构建
 FROM bellsoft/liberica-openjdk-debian:${build_java_version} AS builder
@@ -24,7 +27,7 @@ RUN apt install -y aria2 \
 	libsqlite3-dev libsfcgal-dev libwebp-dev libxerces-c-dev \
 	zlib1g-dev libzstd-dev
 # 下载解压源码
-RUN aria2c -x 16 -s 16 -o /gdal.tar.gz "https://github.com/OSGeo/gdal/releases/download/v3.11.0/gdal-3.11.0.tar.gz"
+RUN aria2c -x 16 -s 16 -o /gdal.tar.gz "https://github.com/OSGeo/gdal/releases/download/v${gdal_version}/gdal-${gdal_version}.tar.gz"
 RUN mkdir /gdal-src /gdal-install
 RUN tar -xvf /gdal.tar.gz --strip-components=1 -C /gdal-src
 # 开始构建

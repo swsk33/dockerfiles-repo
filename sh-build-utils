@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# 构建镜像
+# 参数1：镜像名称
+# 参数2：镜像版本号Tag（不传递则为latest）
+# 参数3：Dockerfile文件名（不传递则为Dockerfile）
+# 参数4：构建路径（不传递则为当前路径.）
+# 参数5：额外构建参数--build-arg列表，是使用declare -A声明的关联数组（哈希表）名称，注意是名称（不传递则不会进行额外参数添加）
+function build_docker_image {
+	# 处理参数
+	image_name=$1
+	app_version=$2
+	dockerfile_name=$3
+	build_path=$4
+	extra_arg_map_name=$5
+	if [ -z "$image_name" ]; then
+		echo 请指定镜像名称！
+		return 1
+	fi
+	if [ -z "$app_version" ]; then
+		app_version=latest
+	fi
+	if [ -z "$dockerfile_name" ]; then
+		dockerfile_name=Dockerfile
+	fi
+	if [ -z "$build_path" ]; then
+		build_path=.
+	fi
+	# 构建镜像的命令与参数列表
+	cmd_list=("docker" "build" "-f" "$dockerfile_name" -t "$image_name:$app_version")
+	# 判断代理
+	if [ -n "$http_proxy" ] && [ -n "$https_proxy" ]; then
+		echo 将使用代理构建镜像...
+		cmd_list+=("--build-arg" "http_proxy=${http_proxy}")
+		cmd_list+=("--build-arg" "https_proxy=${https_proxy}")
+	fi
+	# 添加额外参数
+	if [ -n "$extra_arg_map_name" ]; then
+		echo 将会添加额外参数...
+		declare -n local_arg_map="$extra_arg_map_name"
+		for key in "${!local_arg_map[@]}"; do
+			cmd_list+=("--build-arg" "$key=${local_arg_map[$key]}")
+		done
+	fi
+	cmd_list+=("$build_path")
+	# 执行构建
+	echo 实际构建命令：
+	echo "${cmd_list[*]}"
+	# 执行命令数组
+	"${cmd_list[@]}"
+	# 创建Tag
+	if [ "$app_version" != "latest" ]; then
+		echo 创建latest tag...
+		docker tag "$image_name:$app_version" "$image_name"
+		echo 完成！
+	fi
+	echo 镜像${image_name}构建完成！
+}
+
+echo 已加载函数：build_docker_image
