@@ -38,4 +38,4 @@ build_arg_map["build_java_version"]="$java_version"
 build_arg_map["gdal_version"]="$gdal_version"
 
 # 执行构建
-build_docker_image "$image_name" "$image_version" Dockerfile latest build_arg_map
+build_docker_image "$image_name" "$image_version" "latest/Dockerfile" latest build_arg_map
