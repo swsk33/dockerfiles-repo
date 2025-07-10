@@ -1,11 +1,11 @@
 # 构建参数
 # Java版本
 ARG build_java_version=17
-# GDAL版本
-ARG gdal_version=3.11.1
 
 # 阶段1：构建
 FROM bellsoft/liberica-openjdk-debian:${build_java_version} AS builder
+# GDAL版本
+ARG gdal_version=3.11.1
 # 初始化软件源
 ADD debian.sources /etc/apt/sources.list.d/debian.sources
 ADD pgdg.list /etc/apt/sources.list.d/pgdg.list
